@@ -1,0 +1,1707 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Subway Surfers Runner</title>
+  <style>
+    /* ==================== GLOBAL RESET ==================== */
+    /* Remove default browser margins and padding, use border-box sizing */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* ==================== BODY STYLING ==================== */
+    /* Set font, hide overflow, and create purple gradient background */
+    body {
+      font-family: 'Arial', sans-serif;
+      overflow: hidden;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    /* ==================== GAME CANVAS ==================== */
+    /* Full-screen canvas for Three.js rendering */
+    #gameCanvas {
+      display: block;
+      width: 100%;
+      height: 100vh;
+    }
+
+    /* ==================== UI OVERLAY ==================== */
+    /* Container for all UI elements that sits above the game canvas */
+    #ui {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none; /* Allow clicks to pass through to canvas */
+      z-index: 1000;
+    }
+
+    /* ==================== SCORE PANEL ==================== */
+    /* Top-left panel showing score, coins, and distance */
+    #score-panel {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 15px 25px;
+      border-radius: 10px;
+      color: white;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    #score-panel div {
+      margin: 5px 0;
+    }
+
+    /* Gold color for coin count */
+    #coin-count {
+      color: #ffd700;
+    }
+
+    /* Green color for distance */
+    #distance {
+      color: #00ff88;
+    }
+
+    /* ==================== HEAT BAR ==================== */
+    /* Container for the heat/energy bar at top center */
+    #heat-bar-container {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 300px;
+      height: 30px;
+      background: rgba(0, 0, 0, 0.7);
+      border: 2px solid white;
+      border-radius: 15px;
+      padding: 3px;
+      z-index: 1000;
+    }
+
+    /* Inner fill bar that changes color based on heat level */
+    #heat-bar {
+      width: 0%;
+      height: 100%;
+      border-radius: 12px;
+      background: #03a1fc; /* Blue at start */
+      transition: width 0.1s, background 0.2s;
+    }
+
+    /* ==================== POWER-UP INDICATORS ==================== */
+    /* Container for active power-up displays (top-right) */
+    #powerups {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* Individual power-up indicator styling */
+    .powerup-indicator {
+      background: rgba(0, 0, 0, 0.8);
+      padding: 10px 15px;
+      border-radius: 8px;
+      color: white;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: pulse 0.5s ease-in-out;
+    }
+
+    /* Pulse animation when power-up is activated */
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.1);
+      }
+    }
+
+    .powerup-icon {
+      font-size: 24px;
+    }
+
+    .powerup-timer {
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    /* ==================== CONTROLS HINT ==================== */
+    /* Bottom-center control instructions that fade out after 5 seconds */
+    #controls {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.7);
+      padding: 15px 30px;
+      border-radius: 10px;
+      color: white;
+      font-size: 14px;
+      text-align: center;
+      animation: fadeOut 5s forwards;
+    }
+
+    /* Fade out animation for controls hint */
+    @keyframes fadeOut {
+      0%, 80% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+      }
+    }
+
+    /* ==================== GAME OVER SCREEN ==================== */
+    /* Modal showing final stats when game ends */
+    #game-over {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 40px 60px;
+      border-radius: 20px;
+      text-align: center;
+      color: white;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      transition: transform 0.3s ease-out;
+      pointer-events: all;
+    }
+
+    /* Scale up animation when game over is shown */
+    #game-over.show {
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    #game-over h1 {
+      font-size: 48px;
+      margin-bottom: 20px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    #game-over .stats {
+      margin: 20px 0;
+      font-size: 18px;
+    }
+
+    #game-over .stats div {
+      margin: 10px 0;
+    }
+
+    /* ==================== BUTTONS ==================== */
+    /* Styling for restart and pause buttons */
+    #restart-btn,
+    #pause-btn {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      border: none;
+      padding: 15px 40px;
+      font-size: 18px;
+      font-weight: bold;
+      border-radius: 50px;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: transform 0.2s;
+      pointer-events: all;
+    }
+
+    /* Hover effect for buttons */
+    #restart-btn:hover,
+    #pause-btn:hover {
+      transform: scale(1.1);
+    }
+
+    /* Pause button positioned at top-right */
+    #pause-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 10px 25px;
+      font-size: 16px;
+      z-index: 1001;
+    }
+
+    /* ==================== LOADING SCREEN ==================== */
+    /* Initial loading screen with spinner */
+    #loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 24px;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 30px 50px;
+      border-radius: 15px;
+    }
+
+    /* Rotating spinner animation */
+    .spinner {
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top: 4px solid white;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Main game canvas for Three.js rendering -->
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- UI overlay containing all game interface elements -->
+  <div id="ui">
+    <!-- Score panel showing current game statistics -->
+    <div id="score-panel">
+      <div id="score">Score: 0</div>
+      <div id="coin-count">Coins: 0</div>
+      <div id="distance">Distance: 0m</div>
+    </div>
+
+    <!-- Container for active power-up indicators -->
+    <div id="powerups"></div>
+
+    <!-- Heat bar showing player energy/stamina -->
+    <div id="heat-bar-container">
+      <div id="heat-bar"></div>
+    </div>
+
+    <!-- Control instructions (fades out after 5 seconds) -->
+    <div id="controls">
+      ← → Arrow Keys: Switch Lanes | ↑ Space: Jump | ↓ Shift: Slide
+    </div>
+
+    <!-- Pause button -->
+    <button id="pause-btn">Pause</button>
+
+    <!-- Game over modal with final statistics -->
+    <div id="game-over">
+      <h1>Game Over!</h1>
+      <div class="stats">
+        <div>Final Score: <span id="final-score">0</span></div>
+        <div>Coins Collected: <span id="final-coins">0</span></div>
+        <div>Distance: <span id="final-distance">0</span>m</div>
+      </div>
+      <button id="restart-btn">Restart</button>
+    </div>
+
+    <!-- Loading screen shown while assets load -->
+    <div id="loading">
+      <div>Loading Game...</div>
+      <div class="spinner"></div>
+    </div>
+  </div>
+
+  <!-- ES Module shims for Three.js imports -->
+  <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+  
+  <!-- Import map for Three.js CDN -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    // ==================== IMPORTS ====================
+    // Import Three.js library and GLTF loader for 3D models
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+    // ==================== GAME CONFIGURATION ====================
+    // Central configuration object for all game constants and settings
+    const CONFIG = {
+      lanes: [-2.5, 0, 2.5],           // X positions for left, center, right lanes
+      playerSpeed: 0.15,                // Base forward movement speed
+      speedIncrease: 0.00005,           // Gradual speed increase per frame
+      maxSpeed: 0.35,                   // Maximum speed cap
+      laneChangeSpeed: 0.15,            // Smoothness of lane transitions (0-1)
+      jumpForce: 0.25,                  // Initial upward velocity when jumping
+      gravity: -0.015,                  // Gravity acceleration (negative = downward)
+      slideHeight: 0.5,                 // Player height when sliding
+      normalHeight: 1.8,                // Player height when standing/running
+      segmentLength: 30,                // Length of each track segment
+      segmentPoolSize: 5,               // Number of track segments to maintain
+      obstacleSpawnChance: 0.6,         // Probability of obstacle spawning (0-1)
+      coinSpawnChance: 0.8,             // Probability of coins spawning (0-1)
+      powerUpSpawnChance: 0.05,         // Probability of power-up spawning (0-1)
+      coinValue: 10,                    // Points earned per coin
+      distanceMultiplier: 1,            // Score multiplier based on distance
+      powerUpDuration: 5000,            // Power-up duration in milliseconds
+      redObstacleThreshold: 100,        // Distance at which red obstacles appear
+    };
+
+    // ==================== GAME STATE ====================
+    // Global state object tracking all game variables
+    const gameState = {
+      score: 0,                         // Current score
+      coins: 0,                         // Total coins collected
+      distance: 0,                      // Total distance traveled in meters
+      speed: CONFIG.playerSpeed,        // Current movement speed
+      isPlaying: false,                 // Is game currently active
+      isPaused: false,                  // Is game paused
+      isGameOver: false,                // Has game ended
+      isFalling: false,                 // Is player falling (hit obstacle)
+      currentLane: 1,                   // Current lane (0=left, 1=center, 2=right)
+      isJumping: false,                 // Is player currently jumping
+      isSliding: false,                 // Is player currently sliding
+      activeShield: false,              // Shield power-up active
+      activeMagnet: false,              // Magnet power-up active
+      activeSpeedBoost: false,          // Speed boost power-up active
+      activeDoubleScore: false,         // Double score power-up active
+      powerUpTimers: {},                // Object storing power-up timer intervals
+      heat: 0,                          // Heat bar level (0-100)
+      heatIncreaseRate: 0.1,            // Heat increase per frame
+    };
+
+    // ==================== SCENE SETUP ====================
+    // Create Three.js scene with fog effect for depth perception
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(0x667eea, 10, 80);
+
+    // Create perspective camera with 75° field of view
+    const camera = new THREE.PerspectiveCamera(
+      75,                                // Field of view
+      window.innerWidth / window.innerHeight, // Aspect ratio
+      0.1,                               // Near clipping plane
+      1000                               // Far clipping plane
+    );
+    // Position camera behind and above player
+    camera.position.set(0, 4, 8);
+    camera.lookAt(0, 2, 0);
+
+    // Create WebGL renderer with antialiasing and shadow support
+    const renderer = new THREE.WebGLRenderer({
+      canvas: document.getElementById('gameCanvas'),
+      antialias: true,
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    // ==================== LIGHTING ====================
+    // Add ambient light for overall scene illumination
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+
+    // Add directional light with shadows for dramatic effect
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight.position.set(5, 10, 5);
+    dirLight.castShadow = true;
+    // Configure shadow camera bounds
+    dirLight.shadow.camera.left = -20;
+    dirLight.shadow.camera.right = 20;
+    dirLight.shadow.camera.top = 20;
+    dirLight.shadow.camera.bottom = -20;
+    // Higher resolution shadows
+    dirLight.shadow.mapSize.width = 2048;
+    dirLight.shadow.mapSize.height = 2048;
+    scene.add(dirLight);
+
+    // ==================== PLAYER CLASS ====================
+    /**
+     * Player class handles player character model, animations, physics, and collision
+     */
+    class Player {
+      constructor() {
+        this.model = null;                // Three.js model object
+        this.mixer = null;                // Animation mixer
+        this.animations = {};             // Dictionary of animation actions
+        this.currentAnimation = null;     // Currently playing animation
+        this.position = new THREE.Vector3(0, 0, 0); // Player position
+        this.velocity = new THREE.Vector3(0, 0, 0); // Player velocity for physics
+        this.targetLane = 1;              // Target lane for smooth transitions
+        this.boundingBox = new THREE.Box3(); // Collision detection box
+        // Collision box dimensions
+        this.width = 0.8;
+        this.height = CONFIG.normalHeight;
+        this.depth = 0.8;
+      }
+
+      /**
+       * Load player model from GLTF file
+       * @param {Function} onComplete - Callback when loading completes
+       */
+      load(onComplete) {
+        const loader = new GLTFLoader();
+        loader.load(
+          './ajboy.glb', // Path to player model
+          (gltf) => {
+            // Model loaded successfully
+            this.model = gltf.scene;
+            this.model.scale.set(1, 1, 1);
+            this.model.rotation.y = Math.PI; // Face forward
+            
+            // Enable shadows on all meshes in model
+            this.model.traverse((child) => {
+              if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+              }
+            });
+
+            // Setup animation system
+            this.mixer = new THREE.AnimationMixer(this.model);
+            const clips = gltf.animations;
+
+            // Debug: Log all available animations
+            console.log('All animation clips found:', clips.map(c => c.name));
+            
+            // Find and configure animations by name
+            clips.forEach((clip) => {
+              const name = clip.name.toLowerCase();
+              const exactName = clip.name;
+              
+              // Map animation clips to action keys
+              // Check for exact matches first (most reliable)
+              if (exactName === 'fall-backward' || name === 'fall-backward') {
+                this.animations.fallBackward = this.mixer.clipAction(clip);
+                this.animations.fallBackward.setLoop(THREE.LoopOnce);
+                this.animations.fallBackward.clampWhenFinished = true;
+                console.log('✓ Found fall-backward animation:', exactName);
+              } else if (exactName === 'fall-forward' || name === 'fall-forward') {
+                this.animations.fallForward = this.mixer.clipAction(clip);
+                this.animations.fallForward.setLoop(THREE.LoopOnce);
+                this.animations.fallForward.clampWhenFinished = true;
+                console.log('✓ Found fall-forward animation:', exactName);
+              } else if (exactName === 'jump' || name === 'jump') {
+                this.animations.jump = this.mixer.clipAction(clip);
+                this.animations.jump.setLoop(THREE.LoopOnce);
+                this.animations.jump.clampWhenFinished = false;
+                this.animations.jump.timeScale = 1.0;
+                console.log('✓ Found jump animation:', exactName, 'Duration:', clip.duration, 'seconds');
+              } else if (exactName === 'run' || name === 'run') {
+                this.animations.run = this.mixer.clipAction(clip);
+                console.log('✓ Found run animation:', exactName);
+              } else if (exactName === 'idle' || name === 'idle') {
+                this.animations.idle = this.mixer.clipAction(clip);
+                console.log('✓ Found idle animation:', exactName);
+              } 
+              // Pattern matching fallbacks if exact names not found
+              else if (name.includes('run') && !this.animations.run) {
+                this.animations.run = this.mixer.clipAction(clip);
+                console.log('✓ Found run animation (pattern match):', exactName);
+              } else if (name.includes('jump') && !this.animations.jump) {
+                this.animations.jump = this.mixer.clipAction(clip);
+                this.animations.jump.setLoop(THREE.LoopOnce);
+                this.animations.jump.clampWhenFinished = false;
+                this.animations.jump.timeScale = 1.0;
+                console.log('✓ Found jump animation (pattern match):', exactName, 'Duration:', clip.duration, 'seconds');
+              } else if (name.includes('slide') || name.includes('crouch')) {
+                this.animations.slide = this.mixer.clipAction(clip);
+                this.animations.slide.setLoop(THREE.LoopOnce);
+                this.animations.slide.clampWhenFinished = true;
+                console.log('✓ Found slide animation:', exactName);
+              } else if ((name.includes('fall-backward') || name.includes('fallbackward') || (name.includes('fall') && name.includes('back'))) && !this.animations.fallBackward) {
+                this.animations.fallBackward = this.mixer.clipAction(clip);
+                this.animations.fallBackward.setLoop(THREE.LoopOnce);
+                this.animations.fallBackward.clampWhenFinished = true;
+                console.log('✓ Found fall-backward animation (pattern match):', exactName);
+              } else if ((name.includes('fall-forward') || name.includes('fallforward') || (name.includes('fall') && name.includes('forward'))) && !this.animations.fallForward) {
+                this.animations.fallForward = this.mixer.clipAction(clip);
+                this.animations.fallForward.setLoop(THREE.LoopOnce);
+                this.animations.fallForward.clampWhenFinished = true;
+                console.log('✓ Found fall-forward animation (pattern match):', exactName);
+              } else if (name.includes('fall') && !this.animations.fallBackward && !this.animations.fallForward) {
+                // Generic fall animation as final fallback
+                this.animations.fall = this.mixer.clipAction(clip);
+                this.animations.fall.setLoop(THREE.LoopOnce);
+                this.animations.fall.clampWhenFinished = true;
+                console.log('✓ Found fall animation (generic):', exactName);
+              }
+            });
+
+            // Fallback: Use first animation as run if not found
+            if (!this.animations.run && clips.length > 0) {
+              this.animations.run = this.mixer.clipAction(clips[0]);
+            }
+
+            // Fallback: Use third animation as fall if not found by name
+            if (!this.animations.fall && !this.animations.fallBackward && !this.animations.fallForward && clips.length > 2) {
+              this.animations.fall = this.mixer.clipAction(clips[2]);
+              this.animations.fall.setLoop(THREE.LoopOnce);
+              this.animations.fall.clampWhenFinished = true;
+            }
+
+            // Debug: Log loaded animations
+            console.log('Loaded animations:', Object.keys(this.animations));
+            if (this.animations.fallBackward) console.log('✓ fall-backward animation loaded');
+            if (this.animations.jump) console.log('✓ jump animation loaded');
+
+            // Start with run animation
+            if (this.animations.run) {
+              this.animations.run.play();
+              this.currentAnimation = this.animations.run;
+            }
+
+            // Add model to scene and call completion callback
+            scene.add(this.model);
+            this.updatePosition();
+            onComplete();
+          },
+          undefined,
+          (error) => {
+            // Error loading model
+            console.error('Error loading player model:', error);
+            onComplete();
+          }
+        );
+      }
+
+      /**
+       * Play a specific animation with smooth crossfade
+       * @param {string} name - Animation name
+       * @param {number} fadeTime - Fade transition duration
+       */
+      playAnimation(name, fadeTime = 0.2) {
+        const newAction = this.animations[name];
+        if (!newAction) {
+          console.warn(`Animation "${name}" not found. Available animations:`, Object.keys(this.animations));
+          return;
+        }
+        
+        // Don't restart if already playing
+        if (newAction === this.currentAnimation && newAction.isRunning()) {
+          console.log(`Animation "${name}" is already playing`);
+          return;
+        }
+
+        console.log(`Playing animation: ${name}`);
+        
+        // Special handling for jump animation
+        if (name === 'jump') {
+          if (this.currentAnimation && this.currentAnimation !== newAction) {
+            this.currentAnimation.fadeOut(fadeTime);
+          }
+          newAction.reset();
+          newAction.setEffectiveTimeScale(1);
+          newAction.setEffectiveWeight(1);
+          newAction.fadeIn(fadeTime);
+          newAction.play();
+          this.currentAnimation = newAction;
+          console.log('Jump animation playing, duration:', newAction.getClip().duration);
+        } else {
+          // Normal animation switching with crossfade
+          if (this.currentAnimation) {
+            this.currentAnimation.fadeOut(fadeTime);
+          }
+          newAction.reset();
+          newAction.fadeIn(fadeTime);
+          newAction.play();
+          this.currentAnimation = newAction;
+        }
+      }
+
+      /**
+       * Execute jump action
+       */
+      jump() {
+        // Cannot jump while falling
+        if (gameState.isFalling) {
+          console.log('Cannot jump: player is falling');
+          return;
+        }
+
+        // Only jump if not already jumping or sliding
+        if (!gameState.isJumping && !gameState.isSliding) {
+          gameState.isJumping = true;
+          this.velocity.y = CONFIG.jumpForce; // Apply upward velocity
+          console.log('🎮 JUMP TRIGGERED! Playing jump animation...');
+          console.log('Available animations:', Object.keys(this.animations));
+          
+          // Play jump animation if available
+          if (this.animations.jump) {
+            this.playAnimation('jump', 0.1);
+            console.log('✓ Jump animation started');
+          } else {
+            console.warn('⚠️ Jump animation not found in model!');
+          }
+        } else {
+          console.log('Cannot jump: isJumping=', gameState.isJumping, 'isSliding=', gameState.isSliding);
+        }
+      }
+
+      /**
+       * Execute slide action
+       */
+      slide() {
+        // Cannot slide while falling
+        if (gameState.isFalling) return;
+
+        // Only slide if not already sliding or jumping
+        if (!gameState.isSliding && !gameState.isJumping) {
+          gameState.isSliding = true;
+          this.height = CONFIG.slideHeight; // Lower collision box height
+          this.playAnimation('slide', 0.1);
+          
+          // Return to normal after 500ms
+          setTimeout(() => {
+            gameState.isSliding = false;
+            this.height = CONFIG.normalHeight;
+            if (!gameState.isJumping) {
+              this.playAnimation('run', 0.2);
+            }
+          }, 500);
+        }
+      }
+
+      /**
+       * Change lanes left or right
+       * @param {number} direction - -1 for left, 1 for right
+       */
+      changeLane(direction) {
+        gameState.currentLane += direction;
+        // Clamp to valid lane range (0-2)
+        gameState.currentLane = Math.max(0, Math.min(2, gameState.currentLane));
+        this.targetLane = gameState.currentLane;
+      }
+
+      /**
+       * Update player physics and animation each frame
+       * @param {number} deltaTime - Time since last frame
+       */
+      update(deltaTime) {
+        if (!this.model) return;
+
+        // Update animation mixer for smooth animations
+        if (this.mixer) {
+          this.mixer.update(deltaTime);
+        }
+
+        // Smooth lane switching using linear interpolation
+        const targetX = CONFIG.lanes[this.targetLane];
+        this.position.x += (targetX - this.position.x) * CONFIG.laneChangeSpeed;
+
+        // Jumping physics with gravity
+        if (gameState.isJumping) {
+          this.velocity.y += CONFIG.gravity; // Apply gravity
+          this.position.y += this.velocity.y; // Update position
+
+          // Check if landed
+          if (this.position.y <= 0) {
+            this.position.y = 0;
+            this.velocity.y = 0;
+            gameState.isJumping = false;
+            
+            // Return to run animation if not in another special state
+            if (!gameState.isSliding && !gameState.isFalling) {
+              console.log('Jump finished, returning to run animation');
+              this.playAnimation('run', 0.2);
+            }
+          }
+        }
+
+        this.updatePosition();
+        this.updateBoundingBox();
+      }
+
+      /**
+       * Update 3D model position to match internal position
+       */
+      updatePosition() {
+        if (this.model) {
+          this.model.position.copy(this.position);
+        }
+      }
+
+      /**
+       * Update collision bounding box based on current position and dimensions
+       */
+      updateBoundingBox() {
+        const halfWidth = this.width / 2;
+        const halfDepth = this.depth / 2;
+        this.boundingBox.min.set(
+          this.position.x - halfWidth,
+          this.position.y,
+          this.position.z - halfDepth
+        );
+        this.boundingBox.max.set(
+          this.position.x + halfWidth,
+          this.position.y + this.height,
+          this.position.z + halfDepth
+        );
+      }
+
+      /**
+       * Handle collision with obstacle
+       * @param {Obstacle} obstacle - The obstacle that was hit
+       * @returns {boolean} - True if hit causes game over
+       */
+      hit(obstacle) {
+        // Shield power-up protects from one hit
+        if (gameState.activeShield) {
+          deactivatePowerUp('shield');
+          return false;
+        }
+
+        // Already falling, ignore additional hits
+        if (gameState.isFalling) return false;
+
+        gameState.isFalling = true;
+
+        // Check if obstacle is red (high heat obstacles)
+        const isRedObstacle = obstacle && obstacle.isRed === true;
+        console.log('Player hit obstacle. Is red?', isRedObstacle);
+        console.log('Available animations:', Object.keys(this.animations));
+
+        // Play appropriate fall animation based on obstacle type
+        if (isRedObstacle && this.animations.fallBackward) {
+          // Fall backward for red obstacles
+          console.log('Playing fall-backward animation for red obstacle');
+          this.playAnimation('fallBackward', 0.1);
+        } else if (isRedObstacle && !this.animations.fallBackward) {
+          console.warn('Red obstacle hit but fallBackward animation not found!');
+          if (this.animations.fall) {
+            this.playAnimation('fall', 0.1);
+          }
+        } else if (this.animations.fall) {
+          // Generic fall for non-red obstacles
+          console.log('Playing fall animation for non-red obstacle');
+          this.playAnimation('fall', 0.1);
+        } else {
+          console.warn('No fall animation found!');
+        }
+
+        return true; // Hit causes game over
+      }
+    }
+
+    // ==================== OBSTACLE CLASS ====================
+    /**
+     * Obstacle class represents barriers player must avoid
+     */
+    class Obstacle {
+      /**
+       * Create new obstacle
+       * @param {number} lane - Lane index (0-2)
+       * @param {number} zPosition - Z position on track
+       * @param {string} type - 'static' or 'moving'
+       * @param {boolean} forceRed - Force red color regardless of distance
+       */
+      constructor(lane, zPosition, type = 'static', forceRed = false) {
+        this.lane = lane;
+        this.type = type;
+        this.boundingBox = new THREE.Box3();
+
+        // Red obstacles appear after threshold distance
+        this.isRed = forceRed || gameState.distance >= CONFIG.redObstacleThreshold;
+        const obstacleColor = this.isRed ? 0xff0000 : 0x8b0000;
+
+        // Create 3D mesh for obstacle
+        const geometry = new THREE.BoxGeometry(1.2, 0.8, 1.2);
+        const material = new THREE.MeshStandardMaterial({
+          color: obstacleColor,
+          metalness: 0.3,
+          roughness: 0.7
+        });
+        this.mesh = new THREE.Mesh(geometry, material);
+        this.mesh.position.set(CONFIG.lanes[lane], 0.4, zPosition);
+        this.mesh.castShadow = true;
+        this.mesh.receiveShadow = true;
+
+        // Moving obstacles have lateral velocity
+        this.velocity = type === 'moving' ? 0.1 : 0;
+
+        scene.add(this.mesh);
+        this.updateBoundingBox();
+      }
+
+      /**
+       * Update obstacle position (for moving obstacles)
+       */
+      update() {
+        if (this.type === 'moving') {
+          this.mesh.position.z += this.velocity;
+        }
+        this.updateBoundingBox();
+      }
+
+      /**
+       * Update collision bounding box
+       */
+      updateBoundingBox() {
+        this.boundingBox.setFromObject(this.mesh);
+      }
+
+      /**
+       * Remove obstacle from scene and cleanup
+       */
+      remove() {
+        scene.remove(this.mesh);
+        this.mesh.geometry.dispose();
+        this.mesh.material.dispose();
+      }
+    }
+
+    // ==================== COIN CLASS ====================
+    /**
+     * Coin class represents collectible currency items
+     */
+    class Coin {
+      /**
+       * Create new coin
+       * @param {number} x - X position
+       * @param {number} y - Y position
+       * @param {number} z - Z position
+       * @param {boolean} useSoapModel - Use soap model instead of coin
+       */
+      constructor(x, y, z, useSoapModel = false) {
+        this.collected = false;
+        this.boundingBox = new THREE.Box3();
+        this.useSoapModel = useSoapModel;
+        this.modelLoaded = false;
+        this.baseY = 0.6; // Base height above ground
+        this.floatTime = Math.random() * Math.PI * 2; // Random starting phase for animation
+
+        // Use loaded models or fallback to simple geometry
+        if (useSoapModel && models.soap) {
+          this.mesh = models.soap.clone();
+          this.mesh.scale.set(0.3, 0.3, 0.3);
+          this.modelLoaded = true;
+        } else if (!useSoapModel && models.coin) {
+          this.mesh = models.coin.clone();
+          this.mesh.scale.set(5, 5, 5);
+          this.modelLoaded = true;
+        } else {
+          // Fallback: Create simple golden cylinder
+          const geometry = new THREE.CylinderGeometry(0.3, 0.3, 0.1, 16);
+          const material = new THREE.MeshStandardMaterial({
+            color: 0xffd700,
+            metalness: 0.8,
+            roughness: 0.2,
+            emissive: 0xffd700,
+            emissiveIntensity: 0.3
+          });
+          this.mesh = new THREE.Mesh(geometry, material);
+          this.mesh.rotation.x = Math.PI / 2;
+        }
+
+        this.mesh.position.set(x, this.baseY, z);
+        this.mesh.castShadow = true;
+        this.rotationSpeed = 0.05;
+
+        scene.add(this.mesh);
+        this.updateBoundingBox();
+      }
+
+      /**
+       * Update coin animation (floating and rotating)
+       */
+      update() {
+        // Smooth floating animation using sine wave
+        this.floatTime += 0.05;
+        this.mesh.position.y = this.baseY + Math.sin(this.floatTime) * 0.15;
+        
+        // Continuous rotation
+        this.mesh.rotation.y += this.rotationSpeed;
+        this.updateBoundingBox();
+      }
+
+      /**
+       * Update collision bounding box
+       */
+      updateBoundingBox() {
+        this.boundingBox.setFromObject(this.mesh);
+      }
+
+      /**
+       * Collect coin and remove from scene
+       */
+      collect() {
+        this.collected = true;
+        scene.remove(this.mesh);
+        if (this.mesh.geometry) this.mesh.geometry.dispose();
+        if (this.mesh.material) this.mesh.material.dispose();
+      }
+    }
+
+    // ==================== POWER-UP CLASS ====================
+    /**
+     * PowerUp class represents special ability pickups
+     */
+    class PowerUp {
+      /**
+       * Create new power-up
+       * @param {number} x - X position
+       * @param {number} z - Z position
+       * @param {string} type - 'shield', 'magnet', 'speedboost', or 'doublescore'
+       */
+      constructor(x, z, type) {
+        this.type = type;
+        this.collected = false;
+        this.boundingBox = new THREE.Box3();
+
+        // Color coding for different power-up types
+        const colors = {
+          shield: 0x00ffff,      // Cyan
+          magnet: 0xff00ff,      // Magenta
+          speedboost: 0xff8800,  // Orange
+          doublescore: 0x00ff00  // Green
+        };
+
+        // Create glowing sphere mesh
+        const geometry = new THREE.SphereGeometry(0.5, 16, 16);
+        const material = new THREE.MeshStandardMaterial({
+          color: colors[type],
+          metalness: 0.5,
+          roughness: 0.3,
+          emissive: colors[type],
+          emissiveIntensity: 0.5
+        });
+        this.mesh = new THREE.Mesh(geometry, material);
+        this.mesh.position.set(x, 1, z);
+        this.mesh.castShadow = true;
+
+        // Add point light for glow effect
+        this.light = new THREE.PointLight(colors[type], 1, 5);
+        this.light.position.copy(this.mesh.position);
+        scene.add(this.light);
+
+        this.floatTime = 0;
+        scene.add(this.mesh);
+        this.updateBoundingBox();
+      }
+
+      /**
+       * Update power-up animation (floating and rotating)
+       * @param {number} deltaTime - Time since last frame
+       */
+      update(deltaTime) {
+        // Animated floating motion
+        this.floatTime += deltaTime * 2;
+        this.mesh.position.y = 1 + Math.sin(this.floatTime) * 0.3;
+        
+        // Continuous rotation
+        this.mesh.rotation.y += 0.05;
+        
+        // Update light position to follow mesh
+        this.light.position.copy(this.mesh.position);
+        this.updateBoundingBox();
+      }
+
+      /**
+       * Update collision bounding box
+       */
+      updateBoundingBox() {
+        this.boundingBox.setFromObject(this.mesh);
+      }
+
+      /**
+       * Collect power-up and remove from scene
+       */
+      collect() {
+        this.collected = true;
+        scene.remove(this.mesh);
+        scene.remove(this.light);
+        if (this.mesh.geometry) this.mesh.geometry.dispose();
+        if (this.mesh.material) this.mesh.material.dispose();
+      }
+    }
+
+    // ==================== TRACK SEGMENT CLASS ====================
+    /**
+     * TrackSegment represents a section of the infinite runner track
+     */
+    class TrackSegment {
+      /**
+       * Create new track segment
+       * @param {number} zPosition - Z position of segment center
+       */
+      constructor(zPosition) {
+        this.zPosition = zPosition;
+        this.obstacles = [];
+        this.coins = [];
+        this.powerUps = [];
+
+        // Create ground mesh
+        const geometry = new THREE.BoxGeometry(10, 0.5, CONFIG.segmentLength);
+        const material = new THREE.MeshStandardMaterial({
+          color: 0x444444,
+          roughness: 0.8
+        });
+        this.ground = new THREE.Mesh(geometry, material);
+        this.ground.position.set(0, -0.25, zPosition);
+        this.ground.receiveShadow = true;
+        scene.add(this.ground);
+
+        // Add visual lane markers
+        this.createLaneMarkers();
+
+        // Spawn obstacles, coins, and power-ups
+        this.populate();
+      }
+
+      /**
+       * Create yellow lane divider markers
+       */
+      createLaneMarkers() {
+        const markerGeometry = new THREE.BoxGeometry(0.2, 0.1, 2);
+        const markerMaterial = new THREE.MeshStandardMaterial({ color: 0xffff00 });
+
+        // Create markers between lanes
+        for (let i = 0; i < 3; i++) {
+          for (let j = 0; j < 5; j++) {
+            const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+            const laneX = i === 1 ? -1.2 : 1.2; // Between lanes
+            if (i === 0) continue; // Skip first iteration
+            marker.position.set(
+              laneX,
+              0,
+              this.zPosition - CONFIG.segmentLength / 2 + j * 6
+            );
+            scene.add(marker);
+          }
+        }
+      }
+
+      /**
+       * Populate segment with obstacles, coins, and power-ups
+       */
+      populate() {
+        const numRows = 5; // Number of spawn rows per segment
+        const rowSpacing = CONFIG.segmentLength / numRows;
+
+        for (let i = 0; i < numRows; i++) {
+          const z = this.zPosition - CONFIG.segmentLength / 2 + i * rowSpacing + rowSpacing / 2;
+
+          // Spawn obstacles
+          if (Math.random() < CONFIG.obstacleSpawnChance) {
+            const lane = Math.floor(Math.random() * 3);
+            const isMoving = Math.random() < 0.2; // 20% chance of moving obstacle
+            const forceRed = gameState.distance >= CONFIG.redObstacleThreshold;
+            
+            // Only spawn red obstacles (skip dark red)
+            if (forceRed || gameState.distance >= CONFIG.redObstacleThreshold) {
+              const obstacle = new Obstacle(lane, z, isMoving ? 'moving' : 'static', forceRed);
+              this.obstacles.push(obstacle);
+            }
+          }
+
+          // Spawn coins in patterns (only on lanes)
+          if (Math.random() < CONFIG.coinSpawnChance) {
+            const pattern = Math.floor(Math.random() * 2); // Only 2 patterns now
+            const coinHeight = 0.6; // Ground level height
+
+            if (pattern === 0) {
+              // Pattern 0: Single lane line of coins
+              const lane = Math.floor(Math.random() * 3);
+              for (let j = 0; j < 5; j++) {
+                const coin = new Coin(CONFIG.lanes[lane], coinHeight, z + j * 0.5);
+                this.coins.push(coin);
+              }
+            } else {
+              // Pattern 1: Coins across all three lanes
+              for (let lane = 0; lane < 3; lane++) {
+                const coin = new Coin(CONFIG.lanes[lane], coinHeight, z);
+                this.coins.push(coin);
+              }
+            }
+          }
+
+          // Spawn power-ups (rare)
+          if (Math.random() < CONFIG.powerUpSpawnChance) {
+            const lane = Math.floor(Math.random() * 3);
+            const types = ['shield', 'magnet', 'speedboost', 'doublescore'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            const powerUp = new PowerUp(CONFIG.lanes[lane], z, type);
+            this.powerUps.push(powerUp);
+          }
+        }
+      }
+
+      /**
+       * Update all objects in segment
+       * @param {number} deltaTime - Time since last frame
+       */
+      update(deltaTime) {
+        this.obstacles.forEach(obs => obs.update());
+        this.coins.forEach(coin => coin.update());
+        this.powerUps.forEach(pu => pu.update(deltaTime));
+      }
+
+      /**
+       * Reset segment to new position and regenerate content
+       * @param {number} newZ - New Z position
+       */
+      reset(newZ) {
+        this.zPosition = newZ;
+        this.ground.position.z = newZ;
+
+        // Clean up old objects
+        this.obstacles.forEach(obs => obs.remove());
+        this.coins.forEach(coin => { if (!coin.collected) coin.collect(); });
+        this.powerUps.forEach(pu => { if (!pu.collected) pu.collect(); });
+
+        this.obstacles = [];
+        this.coins = [];
+        this.powerUps = [];
+
+        // Generate new content
+        this.populate();
+      }
+
+      /**
+       * Remove segment and cleanup all objects
+       */
+      remove() {
+        scene.remove(this.ground);
+        this.ground.geometry.dispose();
+        this.ground.material.dispose();
+        this.obstacles.forEach(obs => obs.remove());
+        this.coins.forEach(coin => { if (!coin.collected) coin.collect(); });
+        this.powerUps.forEach(pu => { if (!pu.collected) pu.collect(); });
+      }
+    }
+
+    // ==================== WORLD MANAGER ====================
+    /**
+     * WorldManager handles infinite track generation and recycling
+     */
+    class WorldManager {
+      constructor() {
+        this.segments = [];
+        this.initSegments();
+      }
+
+      /**
+       * Initialize pool of track segments
+       */
+      initSegments() {
+        for (let i = 0; i < CONFIG.segmentPoolSize; i++) {
+          const segment = new TrackSegment(-CONFIG.segmentLength * i);
+          this.segments.push(segment);
+        }
+      }
+
+      /**
+       * Update segments and recycle when needed
+       * @param {number} deltaTime - Time since last frame
+       * @param {number} playerZ - Current player Z position
+       */
+      update(deltaTime, playerZ) {
+        // Update all segments
+        this.segments.forEach(segment => segment.update(deltaTime));
+
+        // Check if we need to recycle segments (infinite runner effect)
+        const lastSegment = this.segments[this.segments.length - 1];
+        if (playerZ < lastSegment.zPosition + CONFIG.segmentLength) {
+          // Move first segment to end and reset it
+          const firstSegment = this.segments.shift();
+          const newZ = lastSegment.zPosition - CONFIG.segmentLength;
+          firstSegment.reset(newZ);
+          this.segments.push(firstSegment);
+        }
+      }
+
+      /**
+       * Get all obstacles from all segments
+       * @returns {Obstacle[]} Array of all obstacles
+       */
+      getAllObstacles() {
+        return this.segments.flatMap(s => s.obstacles);
+      }
+
+      /**
+       * Get all coins from all segments
+       * @returns {Coin[]} Array of all coins
+       */
+      getAllCoins() {
+        return this.segments.flatMap(s => s.coins);
+      }
+
+      /**
+       * Get all power-ups from all segments
+       * @returns {PowerUp[]} Array of all power-ups
+       */
+      getAllPowerUps() {
+        return this.segments.flatMap(s => s.powerUps);
+      }
+    }
+
+    // ==================== COLLISION DETECTION ====================
+    /**
+     * Check if two bounding boxes intersect
+     * @param {THREE.Box3} box1 - First bounding box
+     * @param {THREE.Box3} box2 - Second bounding box
+     * @returns {boolean} True if boxes intersect
+     */
+    function checkCollision(box1, box2) {
+      return box1.intersectsBox(box2);
+    }
+
+    // ==================== POWER-UP SYSTEM ====================
+    /**
+     * Activate a power-up effect
+     * @param {string} type - Power-up type
+     */
+    function activatePowerUp(type) {
+      // Emoji icons for UI display
+      const icons = {
+        shield: '🛡️',
+        magnet: '🧲',
+        speedboost: '⚡',
+        doublescore: '💎'
+      };
+
+      // Set appropriate game state flag
+      if (type === 'shield') {
+        gameState.activeShield = true;
+      } else if (type === 'magnet') {
+        gameState.activeMagnet = true;
+      } else if (type === 'speedboost') {
+        gameState.activeSpeedBoost = true;
+      } else if (type === 'doublescore') {
+        gameState.activeDoubleScore = true;
+      }
+
+      // Add UI indicator with countdown timer
+      const container = document.getElementById('powerups');
+      const indicator = document.createElement('div');
+      indicator.className = 'powerup-indicator';
+      indicator.id = `powerup-${type}`;
+      indicator.innerHTML = `
+        <span class="powerup-icon">${icons[type]}</span>
+        <span class="powerup-timer" id="timer-${type}">5.0s</span>
+      `;
+      container.appendChild(indicator);
+
+      // Update timer display every 100ms
+      const startTime = Date.now();
+      gameState.powerUpTimers[type] = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const remaining = Math.max(0, (CONFIG.powerUpDuration - elapsed) / 1000);
+        const timerEl = document.getElementById(`timer-${type}`);
+        if (timerEl) {
+          timerEl.textContent = remaining.toFixed(1) + 's';
+        }
+      }, 100);
+
+      // Deactivate after duration expires
+      setTimeout(() => deactivatePowerUp(type), CONFIG.powerUpDuration);
+    }
+
+    /**
+     * Deactivate a power-up effect
+     * @param {string} type - Power-up type
+     */
+    function deactivatePowerUp(type) {
+      // Clear appropriate game state flag
+      if (type === 'shield') {
+        gameState.activeShield = false;
+      } else if (type === 'magnet') {
+        gameState.activeMagnet = false;
+      } else if (type === 'speedboost') {
+        gameState.activeSpeedBoost = false;
+      } else if (type === 'doublescore') {
+        gameState.activeDoubleScore = false;
+      }
+
+      // Remove UI indicator
+      const indicator = document.getElementById(`powerup-${type}`);
+      if (indicator) indicator.remove();
+
+      // Clear timer interval
+      if (gameState.powerUpTimers[type]) {
+        clearInterval(gameState.powerUpTimers[type]);
+        delete gameState.powerUpTimers[type];
+      }
+    }
+
+    // ==================== MODEL LOADING ====================
+    // Storage for loaded 3D models
+    const models = {
+      soap: null,
+      coin: null
+    };
+
+    /**
+     * Load all 3D models (soap and coin)
+     * @param {Function} callback - Called when all models loaded
+     */
+    function loadModels(callback) {
+      const loader = new GLTFLoader();
+      let loaded = 0;
+      const total = 2;
+
+      // Check if all models have loaded
+      const checkComplete = () => {
+        loaded++;
+        if (loaded === total) callback();
+      };
+
+      // Load soap model
+      loader.load('./soap.glb',
+        (gltf) => {
+          models.soap = gltf.scene;
+          models.soap.scale.set(0.2, 0.2, 0.2);
+          checkComplete();
+        },
+        undefined,
+        () => checkComplete() // Error fallback - continue anyway
+      );
+
+      // Load coin model
+      loader.load('./coin.glb',
+        (gltf) => {
+          models.coin = gltf.scene;
+          models.coin.scale.set(0.2, 0.2, 0.2);
+          // Add emissive glow to coin
+          models.coin.traverse((child) => {
+            if (child.isMesh && child.material) {
+              child.material.emissive = new THREE.Color(0xffd700);
+              child.material.emissiveIntensity = 0.5;
+            }
+          });
+          checkComplete();
+        },
+        undefined,
+        () => checkComplete() // Error fallback - continue anyway
+      );
+    }
+
+    // ==================== UI UPDATES ====================
+    /**
+     * Update all UI elements with current game state
+     */
+    function updateUI() {
+      // Update score display
+      document.getElementById('score').textContent = `Score: ${gameState.score}`;
+      document.getElementById('coin-count').textContent = `Coins: ${gameState.coins}`;
+      document.getElementById('distance').textContent = `Distance: ${Math.floor(gameState.distance)}m`;
+      
+      // Update heat bar width
+      const heatBar = document.getElementById('heat-bar');
+      heatBar.style.width = gameState.heat + '%';
+      
+      // Update heat bar color based on level
+      if (gameState.heat >= 100) {
+        heatBar.style.background = '#fc2803'; // Red at 100%
+      } else if (gameState.heat >= 50) {
+        heatBar.style.background = '#fce803'; // Yellow at 50%+
+      } else {
+        heatBar.style.background = '#03a1fc'; // Blue below 50%
+      }
+    }
+
+    /**
+     * Display game over screen with final statistics
+     */
+    function showGameOver() {
+      gameState.isGameOver = true;
+      gameState.isPlaying = false;
+
+      // Update final statistics
+      document.getElementById('final-score').textContent = gameState.score;
+      document.getElementById('final-coins').textContent = gameState.coins;
+      document.getElementById('final-distance').textContent = Math.floor(gameState.distance);
+
+      // Show game over modal with scale animation
+      setTimeout(() => {
+        document.getElementById('game-over').classList.add('show');
+      }, 1000);
+    }
+
+    // ==================== CAMERA SYSTEM ====================
+    /**
+     * Smoothly follow player with camera
+     * @param {Player} player - Player object to follow
+     */
+    function updateCamera(player) {
+      if (!player.model) return;
+
+      // Calculate target camera position
+      const targetX = player.position.x;
+      const targetY = player.position.y + 4;
+      const targetZ = player.position.z + 8;
+
+      // Smooth camera movement using lerp
+      camera.position.x += (targetX - camera.position.x) * 0.1;
+      camera.position.y += (targetY - camera.position.y) * 0.1;
+      camera.position.z += (targetZ - camera.position.z) * 0.1;
+
+      // Look slightly ahead of player
+      camera.lookAt(player.position.x, player.position.y + 1, player.position.z - 5);
+    }
+
+    // ==================== INPUT HANDLING ====================
+    // Track which keys are currently pressed
+    const keys = {};
+
+    /**
+     * Handle keydown events for player controls
+     */
+    window.addEventListener('keydown', (e) => {
+      keys[e.code] = true;
+
+      // Ignore input if game not active
+      if (!gameState.isPlaying || gameState.isPaused) return;
+
+      // Lane switching
+      if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+        player.changeLane(-1);
+      } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+        player.changeLane(1);
+      } 
+      // Jumping
+      else if (e.code === 'ArrowUp' || e.code === 'Space') {
+        e.preventDefault(); // Prevent page scroll
+        console.log('⌨️ SPACE KEY PRESSED - Calling jump()');
+        player.jump();
+      } 
+      // Sliding
+      else if (e.code === 'ArrowDown' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+        e.preventDefault();
+        player.slide();
+      } 
+      // Pause
+      else if (e.code === 'Escape') {
+        togglePause();
+      }
+    });
+
+    /**
+     * Handle keyup events
+     */
+    window.addEventListener('keyup', (e) => {
+      keys[e.code] = false;
+    });
+
+    // ==================== GAME LOOP ====================
+    let lastTime = 0;
+    const player = new Player();
+    let world;
+
+    /**
+     * Main game loop - called every frame
+     * @param {number} currentTime - Current timestamp
+     */
+    function gameLoop(currentTime) {
+      requestAnimationFrame(gameLoop);
+
+      // Calculate delta time (capped at 100ms to prevent physics issues)
+      const deltaTime = Math.min((currentTime - lastTime) / 1000, 0.1);
+      lastTime = currentTime;
+
+      // If paused, switch to idle animation and only update mixer
+      if (!gameState.isPlaying || gameState.isPaused) {
+        if (player.mixer) {
+          player.mixer.update(deltaTime);
+        }
+        renderer.render(scene, camera);
+        return;
+      }
+
+      // Update player physics and animation
+      player.update(deltaTime);
+
+      // Move player forward and update distance
+      player.position.z -= gameState.speed;
+      gameState.distance += gameState.speed * 3; // Convert speed to distance
+
+      // Gradually increase difficulty
+      if (gameState.speed < CONFIG.maxSpeed) {
+        gameState.speed += CONFIG.speedIncrease;
+      }
+
+      // Apply speed boost multiplier if active
+      const speedMultiplier = gameState.activeSpeedBoost ? 1.5 : 1;
+
+      // Update world (recycle track segments as needed)
+      world.update(deltaTime, player.position.z);
+
+      // Check collisions with obstacles
+      const obstacles = world.getAllObstacles();
+      for (const obstacle of obstacles) {
+        if (checkCollision(player.boundingBox, obstacle.boundingBox)) {
+          if (player.hit(obstacle)) {
+            // Hit causes game over
+            gameState.isPlaying = false;
+
+            // Show game over after fall animation completes
+            setTimeout(() => {
+              showGameOver();
+            }, 1500);
+
+            return;
+          }
+        }
+      }
+
+      // Update heat bar (increases over time)
+      if (gameState.isPlaying && !gameState.isPaused && !gameState.isFalling && gameState.heat < 100) {
+        gameState.heat += gameState.heatIncreaseRate;
+        if (gameState.heat > 100) gameState.heat = 100;
+      }
+
+      // Check if heat reached 100% - trigger fall-forward animation
+      if (gameState.heat >= 100 && !gameState.isFalling && gameState.isPlaying) {
+        gameState.isFalling = true;
+        gameState.isPlaying = false;
+        
+        // Play forward fall animation
+        if (player.animations.fallForward) {
+          player.playAnimation('fallForward', 0.1);
+        } else if (player.animations.fall) {
+          player.playAnimation('fall', 0.1);
+        }
+
+        // Show game over after fall animation
+        setTimeout(() => {
+          showGameOver();
+        }, 1500);
+        
+        return;
+      }
+
+      // Check coin collection
+      const coins = world.getAllCoins();
+      for (const coin of coins) {
+        if (coin.collected) continue;
+
+        // Magnet power-up pulls coins toward player
+        if (gameState.activeMagnet) {
+          const dx = player.position.x - coin.mesh.position.x;
+          const dz = player.position.z - coin.mesh.position.z;
+          const distance = Math.sqrt(dx * dx + dz * dz);
+
+          // Attract coins within range
+          if (distance < 5) {
+            coin.mesh.position.x += dx * 0.1;
+            coin.mesh.position.z += dz * 0.1;
+          }
+        }
+
+        // Check if player touched coin
+        if (checkCollision(player.boundingBox, coin.boundingBox)) {
+          coin.collect();
+          gameState.coins++;
+          // Calculate points (with double score bonus if active)
+          const points = CONFIG.coinValue * (gameState.activeDoubleScore ? 2 : 1);
+          gameState.score += points;
+          
+          // Reduce heat by 5% when collecting a coin
+          gameState.heat = Math.max(0, gameState.heat - 2);
+        }
+      }
+
+      // Check power-up collection
+      const powerUps = world.getAllPowerUps();
+      for (const powerUp of powerUps) {
+        if (powerUp.collected) continue;
+
+        if (checkCollision(player.boundingBox, powerUp.boundingBox)) {
+          powerUp.collect();
+          activatePowerUp(powerUp.type);
+        }
+      }
+
+      // Update score from distance traveled
+      gameState.score += CONFIG.distanceMultiplier * (gameState.activeDoubleScore ? 2 : 1);
+
+      // Update camera to follow player
+      updateCamera(player);
+
+      // Update UI elements
+      updateUI();
+
+      // Render frame
+      renderer.render(scene, camera);
+    }
+
+    // ==================== GAME CONTROLS ====================
+    /**
+     * Toggle pause state and switch animation
+     */
+    function togglePause() {
+      gameState.isPaused = !gameState.isPaused;
+      document.getElementById('pause-btn').textContent = gameState.isPaused ? 'Resume' : 'Pause';
+      
+      // Switch animation based on pause state
+      if (gameState.isPaused) {
+        // Switch to idle when paused
+        if (player.animations.idle) {
+          player.playAnimation('idle', 0.3);
+        }
+      } else {
+        // Switch back to run when resumed (only if not jumping, sliding, or falling)
+        if (!gameState.isJumping && !gameState.isSliding && !gameState.isFalling) {
+          if (player.animations.run) {
+            player.playAnimation('run', 0.3);
+          }
+        }
+      }
+    }
+
+    /**
+     * Restart game by reloading page
+     */
+    function restartGame() {
+      location.reload();
+    }
+
+    // Attach button event listeners
+    document.getElementById('pause-btn').addEventListener('click', togglePause);
+    document.getElementById('restart-btn').addEventListener('click', restartGame);
+
+    // ==================== INITIALIZATION ====================
+    /**
+     * Start the game after all assets are loaded
+     */
+    function startGame() {
+      document.getElementById('loading').style.display = 'none';
+      gameState.isPlaying = true;
+      gameState.isPaused = false;
+      lastTime = performance.now();
+      gameLoop(lastTime);
+    }
+
+    // Load all assets in sequence, then start game
+    loadModels(() => {
+      player.load(() => {
+        world = new WorldManager();
+        startGame();
+      });
+    });
+
+    // ==================== WINDOW RESIZE HANDLER ====================
+    /**
+     * Handle window resize to maintain proper aspect ratio
+     */
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+
+</html>
