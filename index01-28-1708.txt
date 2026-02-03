@@ -1180,101 +1180,35 @@
             }
           }
 
-          // Spawn coins (Subway Surfers style)
+          // Spawn coins in patterns (only on lanes)
           if (Math.random() < CONFIG.coinSpawnChance) {
-            const pattern = Math.floor(Math.random() * 5);
-            const spacing = 0.6;
+            const pattern = Math.floor(Math.random() * 2); // Only 2 patterns now
+            const coinHeight = 0.6; // Ground level height
 
-            switch (pattern) {
-
-              // 1️⃣ Straight lane trail
-              case 0: {
-                const lane = Math.floor(Math.random() * 3);
-                for (let i = 0; i < 8; i++) {
-                  this.coins.push(
-                    new Coin(CONFIG.lanes[lane], 0.6, z + i * spacing)
-                  );
-                }
-                break;
+            if (pattern === 0) {
+              // Pattern 0: Single lane line of coins
+              const lane = Math.floor(Math.random() * 3);
+              for (let j = 0; j < 5; j++) {
+                const coin = new Coin(CONFIG.lanes[lane], coinHeight, z + j * 0.5);
+                this.coins.push(coin);
               }
-
-              // 2️⃣ Zig-zag lane switch
-              case 1: {
-                let lane = Math.floor(Math.random() * 3);
-                for (let i = 0; i < 7; i++) {
-                  this.coins.push(
-                    new Coin(CONFIG.lanes[lane], 0.6, z + i * spacing)
-                  );
-                  lane = Math.min(2, Math.max(0, lane + (Math.random() > 0.5 ? 1 : -1)));
-                }
-                break;
-              }
-
-              // 3️⃣ Jump arc
-              case 2: {
-                const lane = Math.floor(Math.random() * 3);
-                for (let i = 0; i < 6; i++) {
-                  const height = 0.6 + Math.sin((i / 5) * Math.PI) * 1.2;
-                  this.coins.push(
-                    new Coin(CONFIG.lanes[lane], height, z + i * spacing)
-                  );
-                }
-                break;
-              }
-
-              // 4️⃣ Slide coins (low height)
-              case 3: {
-                const lane = Math.floor(Math.random() * 3);
-                for (let i = 0; i < 6; i++) {
-                  this.coins.push(
-                    new Coin(CONFIG.lanes[lane], 0.25, z + i * spacing)
-                  );
-                }
-                break;
-              }
-
-              // 5️⃣ All-lane wall
-              case 4: {
-                for (let lane = 0; lane < 3; lane++) {
-                  this.coins.push(
-                    new Coin(CONFIG.lanes[lane], 0.6, z)
-                  );
-                }
-                break;
+            } else {
+              // Pattern 1: Coins across all three lanes
+              for (let lane = 0; lane < 3; lane++) {
+                const coin = new Coin(CONFIG.lanes[lane], coinHeight, z);
+                this.coins.push(coin);
               }
             }
           }
 
-
-          // Spawn coins in patterns (only on lanes)
-          // if (Math.random() < CONFIG.coinSpawnChance) {
-          //   const pattern = Math.floor(Math.random() * 2); // Only 2 patterns now
-          //   const coinHeight = 0.6; // Ground level height
-
-          //   if (pattern === 0) {
-          //     // Pattern 0: Single lane line of coins
-          //     const lane = Math.floor(Math.random() * 3);
-          //     for (let j = 0; j < 5; j++) {
-          //       const coin = new Coin(CONFIG.lanes[lane], coinHeight, z + j * 0.5);
-          //       this.coins.push(coin);
-          //     }
-          //   } else {
-          //     // Pattern 1: Coins across all three lanes
-          //     for (let lane = 0; lane < 3; lane++) {
-          //       const coin = new Coin(CONFIG.lanes[lane], coinHeight, z);
-          //       this.coins.push(coin);
-          //     }
-          //   }
-          // }
-
           // Spawn power-ups (rare)
-          // if (Math.random() < CONFIG.powerUpSpawnChance) {
-          //   const lane = Math.floor(Math.random() * 3);
-          //   const types = ['shield', 'magnet', 'speedboost', 'doublescore'];
-          //   const type = types[Math.floor(Math.random() * types.length)];
-          //   const powerUp = new PowerUp(CONFIG.lanes[lane], z, type);
-          //   this.powerUps.push(powerUp);
-          // }
+          if (Math.random() < CONFIG.powerUpSpawnChance) {
+            const lane = Math.floor(Math.random() * 3);
+            const types = ['shield', 'magnet', 'speedboost', 'doublescore'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            const powerUp = new PowerUp(CONFIG.lanes[lane], z, type);
+            this.powerUps.push(powerUp);
+          }
         }
       }
 
@@ -1623,7 +1557,7 @@
         (gltf) => {
           models.coin = gltf.scene;
           models.coin.scale.set(0.05, 0.05, 0.05); // Much smaller base scale
-
+         
           // Add emissive glow to coin
           models.coin.traverse((child) => {
             if (child.isMesh && child.material) {
