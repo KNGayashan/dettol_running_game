@@ -288,224 +288,40 @@
       z-index: 1001;
     }
 
-
     /* ==================== LOADING SCREEN ==================== */
+    /* Initial loading screen with spinner */
     #loading {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      color: white;
-      z-index: 2000;
-    }
-
-    #loading-content {
-      text-align: center;
-    }
-
-    #loading h1 {
-      font-size: 48px;
-      font-weight: bold;
-      margin-bottom: 40px;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-      animation: titlePulse 2s ease-in-out infinite;
-    }
-
-    @keyframes titlePulse {
-      0%, 100% {
-        opacity: 1;
-        transform: scale(1);
-      }
-      50% {
-        opacity: 0.85;
-        transform: scale(1.03);
-      }
-    }
-
-    #progress-bar-container {
-      width: 400px;
-      height: 30px;
-      background: rgba(0, 0, 0, 0.3);
-      border: 3px solid rgba(255, 255, 255, 0.5);
-      border-radius: 15px;
-      padding: 4px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    }
-
-    #progress-bar {
-      width: 0%;
-      height: 100%;
-      background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
-      border-radius: 10px;
-      transition: width 0.3s ease;
-      box-shadow: 0 0 20px rgba(79, 172, 254, 0.8);
-      position: relative;
-      overflow: hidden;
-    }
-
-    #progress-bar::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-      animation: shimmer 1.5s infinite;
-    }
-
-    @keyframes shimmer {
-      0% {
-        left: -100%;
-      }
-      100% {
-        left: 100%;
-      }
-    }
-
-    #progress-text {
-      margin-top: 20px;
-      font-size: 18px;
-      font-weight: 600;
-      color: rgba(255, 255, 255, 0.9);
-      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-    }
-
-    /* ==================== MOBILE CONTROLS ==================== */
-    #mobile-controls {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 200px;
-      display: none;
-      pointer-events: all;
-      z-index: 1500;
-    }
-
-    /* Show mobile controls on touch devices */
-    @media (hover: none) and (pointer: coarse) {
-      #mobile-controls {
-        display: block;
-      }
-      #controls {
-        display: none;
-      }
-    }
-
-    /* D-pad container */
-    #dpad {
-      position: absolute;
-      left: 30px;
-      bottom: 30px;
-      width: 150px;
-      height: 150px;
-    }
-
-    /* Individual direction buttons */
-    .dpad-btn {
-      position: absolute;
-      width: 50px;
-      height: 50px;
-      background: rgba(255, 255, 255, 0.3);
-      border: 2px solid rgba(255, 255, 255, 0.6);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      color: white;
-      cursor: pointer;
-      user-select: none;
-      transition: all 0.1s;
-      backdrop-filter: blur(10px);
-    }
-
-    .dpad-btn:active {
-      background: rgba(255, 255, 255, 0.5);
-      transform: scale(0.95);
-    }
-
-    #btn-left {
-      left: 0;
-      top: 50px;
-    }
-
-    #btn-right {
-      right: 0;
-      top: 50px;
-    }
-
-    #btn-up {
-      left: 50px;
-      top: 0;
-    }
-
-    #btn-down {
-      left: 50px;
-      bottom: 0;
-    }
-
-    /* Action buttons container */
-    #action-buttons {
-      position: absolute;
-      right: 30px;
-      bottom: 30px;
-      display: flex;
-      gap: 15px;
-    }
-
-    .action-btn {
-      width: 70px;
-      height: 70px;
-      background: rgba(255, 255, 255, 0.3);
-      border: 3px solid rgba(255, 255, 255, 0.6);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      font-weight: bold;
-      color: white;
-      cursor: pointer;
-      user-select: none;
-      transition: all 0.1s;
-      backdrop-filter: blur(10px);
-      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-    }
-
-    .action-btn:active {
-      background: rgba(255, 255, 255, 0.5);
-      transform: scale(0.95);
-    }
-
-    #btn-jump {
-      background: rgba(79, 172, 254, 0.4);
-      border-color: rgba(79, 172, 254, 0.8);
-    }
-
-    #btn-slide {
-      background: rgba(255, 107, 107, 0.4);
-      border-color: rgba(255, 107, 107, 0.8);
-    }
-
-    /* Swipe gesture indicator */
-    #swipe-hint {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      color: rgba(255, 255, 255, 0.6);
-      font-size: 14px;
+      color: white;
+      font-size: 24px;
       text-align: center;
-      pointer-events: none;
-      animation: fadeOut 5s forwards;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 30px 50px;
+      border-radius: 15px;
+    }
+
+    /* Rotating spinner animation */
+    .spinner {
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top: 4px solid white;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
     }
   </style>
 </head>
@@ -556,38 +372,11 @@
       <button id="restart-btn">Restart</button>
     </div>
 
-
-    <!-- Mobile Controls -->
-    <div id="mobile-controls">
-      <!-- D-pad for lane switching -->
-      <div id="dpad">
-        <div class="dpad-btn" id="btn-left">←</div>
-        <div class="dpad-btn" id="btn-right">→</div>
-        <div class="dpad-btn" id="btn-up">↑</div>
-        <div class="dpad-btn" id="btn-down">↓</div>
-      </div>
-      
-      <!-- Action buttons -->
-      <div id="action-buttons">
-        <div class="action-btn" id="btn-jump">JUMP</div>
-        <div class="action-btn" id="btn-slide">SLIDE</div>
-      </div>
-      
-      <!-- Swipe hint -->
-      <div id="swipe-hint">Swipe to move • Tap buttons to jump/slide</div>
-    </div>
-
-    <!-- Loading screen with progress bar -->
+    <!-- Loading screen shown while assets load -->
     <div id="loading">
-      <div id="loading-content">
-        <h1>🏃 Subway Surfers</h1>
-        <div id="progress-bar-container">
-          <div id="progress-bar"></div>
-        </div>
-        <div id="progress-text">Loading... 0%</div>
-      </div>
+      <div>Loading Game...</div>
+      <div class="spinner"></div>
     </div>
-  </div>
   </div>
 
   <!-- ES Module shims for Three.js imports -->
@@ -1807,12 +1596,6 @@
      * Load all 3D models (soap and coin)
      * @param {Function} callback - Called when all models loaded
      */
-    // Progress tracking
-    function updateLoadingProgress(percent) {
-      document.getElementById('progress-bar').style.width = percent + '%';
-      document.getElementById('progress-text').textContent = `Loading... ${Math.round(percent)}%`;
-    }
-
     function loadModels(callback) {
       const loader = new GLTFLoader();
       let loaded = 0;
@@ -1821,7 +1604,6 @@
       // Check if all models have loaded
       const checkComplete = () => {
         loaded++;
-        updateLoadingProgress((loaded / 3) * 100); // 2 models + 1 player = 3 total
         if (loaded === total) callback();
       };
 
@@ -1971,139 +1753,6 @@
     window.addEventListener('keyup', (e) => {
       keys[e.code] = false;
     });
-
-    // ==================== MOBILE/TOUCH CONTROLS ====================
-    // Touch controls for mobile devices
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let touchEndX = 0;
-    let touchEndY = 0;
-    const minSwipeDistance = 30; // Minimum distance for a swipe to register
-
-    /**
-     * Handle touch start for swipe gestures
-     */
-    document.addEventListener('touchstart', (e) => {
-      touchStartX = e.changedTouches[0].screenX;
-      touchStartY = e.changedTouches[0].screenY;
-    }, { passive: true });
-
-    /**
-     * Handle touch end for swipe gestures
-     */
-    document.addEventListener('touchend', (e) => {
-      if (!gameState.isPlaying || gameState.isPaused) return;
-
-      touchEndX = e.changedTouches[0].screenX;
-      touchEndY = e.changedTouches[0].screenY;
-      handleSwipeGesture();
-    }, { passive: true });
-
-    /**
-     * Process swipe gestures
-     */
-    function handleSwipeGesture() {
-      const deltaX = touchEndX - touchStartX;
-      const deltaY = touchEndY - touchStartY;
-      const absDeltaX = Math.abs(deltaX);
-      const absDeltaY = Math.abs(deltaY);
-
-      // Horizontal swipe (lane change)
-      if (absDeltaX > absDeltaY && absDeltaX > minSwipeDistance) {
-        if (deltaX > 0) {
-          // Swipe right
-          player.changeLane(1);
-        } else {
-          // Swipe left
-          player.changeLane(-1);
-        }
-      }
-      // Vertical swipe
-      else if (absDeltaY > absDeltaX && absDeltaY > minSwipeDistance) {
-        if (deltaY < 0) {
-          // Swipe up - jump
-          player.jump();
-        } else {
-          // Swipe down - slide
-          player.slide();
-        }
-      }
-    }
-
-    // Mobile button controls
-    const mobileButtons = {
-      left: document.getElementById('btn-left'),
-      right: document.getElementById('btn-right'),
-      up: document.getElementById('btn-up'),
-      down: document.getElementById('btn-down'),
-      jump: document.getElementById('btn-jump'),
-      slide: document.getElementById('btn-slide')
-    };
-
-    /**
-     * Add touch event listeners to mobile buttons
-     */
-    function setupMobileControls() {
-      // D-pad buttons
-      if (mobileButtons.left) {
-        mobileButtons.left.addEventListener('touchstart', (e) => {
-          e.preventDefault();
-          if (gameState.isPlaying && !gameState.isPaused) {
-            player.changeLane(-1);
-          }
-        });
-      }
-
-      if (mobileButtons.right) {
-        mobileButtons.right.addEventListener('touchstart', (e) => {
-          e.preventDefault();
-          if (gameState.isPlaying && !gameState.isPaused) {
-            player.changeLane(1);
-          }
-        });
-      }
-
-      if (mobileButtons.up) {
-        mobileButtons.up.addEventListener('touchstart', (e) => {
-          e.preventDefault();
-          if (gameState.isPlaying && !gameState.isPaused) {
-            player.jump();
-          }
-        });
-      }
-
-      if (mobileButtons.down) {
-        mobileButtons.down.addEventListener('touchstart', (e) => {
-          e.preventDefault();
-          if (gameState.isPlaying && !gameState.isPaused) {
-            player.slide();
-          }
-        });
-      }
-
-      // Action buttons
-      if (mobileButtons.jump) {
-        mobileButtons.jump.addEventListener('touchstart', (e) => {
-          e.preventDefault();
-          if (gameState.isPlaying && !gameState.isPaused) {
-            player.jump();
-          }
-        });
-      }
-
-      if (mobileButtons.slide) {
-        mobileButtons.slide.addEventListener('touchstart', (e) => {
-          e.preventDefault();
-          if (gameState.isPlaying && !gameState.isPaused) {
-            player.slide();
-          }
-        });
-      }
-    }
-
-    // Initialize mobile controls after DOM is ready
-    setupMobileControls();
-
 
     // ==================== GAME LOOP ====================
     let lastTime = 0;
@@ -2309,41 +1958,24 @@
 
     // ==================== INITIALIZATION ====================
     /**
-
-    // Load all assets in sequence, then start game
-    loadModels(() => {
-      player.load(() => {
-        updateLoadingProgress(100);
-        world = new WorldManager();
-        startGame();
-      });
-    });
-
-    // ==================== INITIALIZATION ====================
-    /**
      * Start the game after all assets are loaded
      */
     function startGame() {
-      // Final progress update
-      updateLoadingProgress(100);
-      
-      setTimeout(() => {
-        document.getElementById('loading').style.display = 'none';
-        gameState.isPlaying = true;
-        gameState.isPaused = false;
-        lastTime = performance.now();
-        gameLoop(lastTime);
-      }, 300);
+      document.getElementById('loading').style.display = 'none';
+      gameState.isPlaying = true;
+      gameState.isPaused = false;
+      lastTime = performance.now();
+      gameLoop(lastTime);
     }
 
     // Load all assets in sequence, then start game
     loadModels(() => {
       player.load(() => {
-        updateLoadingProgress(100);
         world = new WorldManager();
         startGame();
       });
     });
+
     // ==================== WINDOW RESIZE HANDLER ====================
     /**
      * Handle window resize to maintain proper aspect ratio
